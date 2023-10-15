@@ -1,0 +1,221 @@
+<html>
+    <head>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <script lang="javascript">
+            const players = ["Asher", "Braven", "Caleb", "Charlie", "Creek", "Eli", "Ewan", "Harrison", "Julian", "Landon", "Reid", "Weston"]
+
+            const stats = ["Shot", "SOG", "Goal", "Assist", "Corner", "FS", "FC", "Offsides", "Save"]
+
+            document.addEventListener('alpine:init', () => {
+                const currentGameKey = 'currentgameevents';
+                let currentGameCount = 0;
+                let jsonifiedEvents = window.localStorage.getItem(`${currentGameKey}${currentGameCount}`);
+                if (!jsonifiedEvents) {
+                    jsonifiedEvents = '[]'
+                }
+                const preloadedEvents = JSON.parse(jsonifiedEvents);
+
+                function calculateFrom(player, eventstream) {
+                    const pstats = {}
+                    for (const stat of stats) {
+                        pstats[stat] = 0;
+                    }
+                    for (const event of eventstream) {
+                        if (event[0] == player) {
+                            pstats[event[1]] += 1;
+                            if (event[1] == "Goal") {
+                                pstats["Shot"] += 1;
+                                pstats["SOG"] += 1;
+                            }
+                            if (event[1] == "SOG") {
+                                pstats["Shot"] += 1;
+                            }
+                        }
+                    }
+                    return pstats;
+                }
+
+                function preloadPlayerStats() {
+                    const playerstats = []
+                    for (const player of players) {
+                        const p = {}
+                        p.name = player;
+                        p.stats = calculateFrom(player, preloadedEvents);
+                        playerstats.push(p)
+                    }
+                    return playerstats;
+                }
+
+                Alpine.data('state', () => ({
+                    currentScreen: 'enterstats',
+                    selectedPlayer: players[0],
+                    eventStream: preloadedEvents,
+                    playerstats: preloadPlayerStats(),
+                    calculatePlayerStats(player) {
+                        const pstats = calculateFrom(player, this.eventStream);
+                        for (const ps of this.playerstats) {
+                            if (ps.name == player) {
+                                ps.stats = pstats;
+                            }
+                        }
+                    },
+                    setPlayer(player) {
+                        this.selectedPlayer = player;
+                    },
+                    pushEvent(event) {
+                        this.eventStream.push([
+                            this.selectedPlayer,
+                            event,
+                            new Date()
+                        ]);
+                        window.localStorage.setItem(`${currentGameKey}${currentGameCount}`, JSON.stringify(this.eventStream));
+                        this.calculatePlayerStats(this.selectPlayer)
+                    },
+                    changeScreen(screen) {
+                        this.currentScreen = screen;
+                        if (screen == "aggegrate") {
+                            for (const player of players) {
+                                this.calculatePlayerStats(player)
+                            }
+                        }
+                    },
+                    reset() {
+                        this.eventStream = [];
+                        currentGameCount += 1;
+                        this.playerstats = {};
+                        window.localStorage.setItem(`${currentGameKey}${currentGameCount}`, JSON.stringify([]))
+                    }
+                }))
+            })
+        
+        </script>
+        <style>
+            ul {
+                margin: 0;
+                list-style-type: none;
+            }
+            ul li {
+                margin: .4em;
+            }
+            ul li button {
+                width: 100px;
+            }
+            ul li button.chosen {
+                border: 2px solid black;
+                background: maroon;
+                color: white;
+            }
+            .twocol {
+                display: flex;
+                flex-direction: row;
+            }
+            .col {
+                width: 50%;
+                text-align: right;
+                padding: 0 .4em;
+            }
+            .colstat {
+                text-align: left;
+            }
+            #head {
+                width: 100%;
+                text-align: center;
+                border-bottom: 1px solid black;
+            }
+            #head button {
+                background: transparent;
+                border: 0;
+                display: inline-block;
+                margin: 0 1em;
+                font-size: 1.5em;
+            }
+            #view {
+                text-align: center;
+            }
+            #view table {
+                margin: 0 auto;
+                width: 100%;
+            }
+            #viewagg table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            #viewagg table tr {
+                border-bottom: 1px solid #ddd;
+            }
+            #viewagg table td {
+                padding: 4px 0;
+            }
+        </style>
+    </head>
+    <body x-data="state">
+        <div id="head">
+            <div id="enter">
+                <button x-on:click="changeScreen('enterstats')">Enter Stats</button>
+                <button x-on:click="changeScreen('eventstats')">View Stream</button>
+                <button x-on:click="changeScreen('aggregate')">View Stats</button>
+            </div>
+        </div>
+        <div id="enterstats" x-show="currentScreen == 'enterstats'" class="twocol">
+            <div class="col">
+                <ul class="playerlist" x-data="{players}">
+                    <template x-for="player in players">
+                        <li>
+                            <button
+                                x-text="player"
+                                x-on:click="setPlayer(player)"
+                                :class="player == selectedPlayer ? 'chosen' : ''"
+                            >
+                            
+                            </button>
+                        </li>
+                    </template>
+                    
+                </ul>
+            </div>
+            <div class="col colstat">
+                <ul class="statlist" x-data="{stats}">
+                    <template x-for="stat in stats">
+                        <li>
+                            <button x-text="stat"
+                                x-on:click="pushEvent(stat)"
+                            ></button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+        <div id="view" x-show="currentScreen == 'eventstats'">
+            <table>           
+                <template x-for="event in eventStream">
+                    <tr>
+                        <td x-text="event[0]"></td>
+                        <td x-text="event[1]"></td>
+                        <td x-text="event[2]"></td>
+                    </tr>
+                </template>
+            </table>
+            <a x-on:click="reset()">Reset. Click with caution</a>
+        </div>
+        <div id="viewagg" x-show="currentScreen == 'aggregate'">
+            <table>
+                <tr>
+                    <td></td>
+                    <template x-for="stat in stats">
+                        <td x-text="stat"></td>
+                    </template>
+                </tr>     
+                <template x-for="player in playerstats">
+                    <tr>
+                        <td x-text="player.name"></td>
+                        <template x-for="stat in player.stats">
+                            <td x-text="stat">
+
+                            </td>
+                        </template>                       
+                    </tr>
+                </template>
+            </table>
+        </div>
+    </body>
+</html>
