@@ -93,12 +93,18 @@
             ul {
                 margin: 0;
                 list-style-type: none;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
             }
             ul li {
                 margin: .4em;
+                flex-grow: 1;
+                width: 100%;
             }
             ul li button {
-                width: 100px;
+                width: 100%;
+                height: 100%;
             }
             ul li button.chosen {
                 border: 2px solid black;
@@ -108,11 +114,15 @@
             .twocol {
                 display: flex;
                 flex-direction: row;
+                height: 100%;
             }
             .col {
                 width: 50%;
+                height: 100%;
                 text-align: right;
                 padding: 0 .4em;
+                display: flex;
+                flex-direction: column;
             }
             .colstat {
                 text-align: left;
