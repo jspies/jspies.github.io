@@ -6,6 +6,8 @@
 
             const stats = ["Shot", "SOG", "Goal", "Assist", "Corner", "FS", "FC", "Offsides", "Save"]
 
+            const currentGameKey = 'currentgameevents';
+
             function figureOutLatestGameCount() {
                 let counter = 0;
                 while (true) {
@@ -21,7 +23,6 @@
             }
 
             document.addEventListener('alpine:init', () => {
-                const currentGameKey = 'currentgameevents';
                 let currentGameCount = figureOutLatestGameCount();
                 let jsonifiedEvents = window.localStorage.getItem(`${currentGameKey}${currentGameCount}`);
                 if (!jsonifiedEvents) {
