@@ -6,9 +6,23 @@
 
             const stats = ["Shot", "SOG", "Goal", "Assist", "Corner", "FS", "FC", "Offsides", "Save"]
 
+            function figureOutLatestGameCount() {
+                let counter = 0;
+                while (true) {
+                    let jsonifiedEvents = window.localStorage.getItem(`${currentGameKey}${counter}`);
+                    if (jsonifiedEvents) {
+                        counter++;
+                    } else {
+                        if (counter == 0) return 0;
+                        counter = counter - 1;
+                        return counter;
+                    }
+                }
+            }
+
             document.addEventListener('alpine:init', () => {
                 const currentGameKey = 'currentgameevents';
-                let currentGameCount = 0;
+                let currentGameCount = figureOutLatestGameCount();
                 let jsonifiedEvents = window.localStorage.getItem(`${currentGameKey}${currentGameCount}`);
                 if (!jsonifiedEvents) {
                     jsonifiedEvents = '[]'
