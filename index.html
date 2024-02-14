@@ -66,6 +66,7 @@
                     selectedPlayer: players[0],
                     eventStream: preloadedEvents,
                     playerstats: preloadPlayerStats(),
+                    games: [],
                     calculatePlayerStats(player) {
                         const pstats = calculateFrom(player, this.eventStream);
                         for (const ps of this.playerstats) {
@@ -158,7 +159,7 @@
                 border: 0;
                 display: inline-block;
                 margin: 0 1em;
-                font-size: 1.6em;
+                font-size: 2.0em;
                 color: black;
             }
             #view {
@@ -178,11 +179,15 @@
             #viewagg table td {
                 padding: 4px 0;
             }
+            #viewgame table td {
+                padding: 4px 0;
+            }
         </style>
     </head>
     <body x-data="state">
         <div id="head">
             <div id="enter">
+                <button x-on:click="changeScreen('games')">Games</button>
                 <button x-on:click="changeScreen('enterstats')">Enter Stats</button>
                 <button x-on:click="changeScreen('eventstats')">View Stream</button>
                 <button x-on:click="changeScreen('aggregate')">View Stats</button>
@@ -245,6 +250,20 @@
 
                             </td>
                         </template>                       
+                    </tr>
+                </template>
+            </table>
+        </div>
+        <div id="viewgames" x-show="currentScreen == 'games'">
+            <table>
+                <tr>
+                    <td>Date</td>
+                    <td>Opponent</td>
+                </tr>     
+                <template x-for="game in games">
+                    <tr>
+                        <td x-text="game.date"></td>
+                        <td x-text="game.opponent"></td>
                     </tr>
                 </template>
             </table>
